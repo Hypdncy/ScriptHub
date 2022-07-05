@@ -89,7 +89,7 @@ if __name__ == "__main__":
     # res = session.post(url=url, json=body, headers=headers)
     # print(session.cookies)
 
-    # cookies = dict(SimpleCookie(cookie))
+    # cookies = update(SimpleCookie(cookie))
     # print(cookies)
     # for i in range(100000, 100002):
     #     body = {

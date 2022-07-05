@@ -1,3 +1,10 @@
+# Myself
+.idea/
+.vscode/
+result/
+/scripts/scripts/
+/test.py
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
@@ -37,7 +44,7 @@ MANIFEST
 pip-log.txt
 pip-delete-this-directory.txt
 
-# Unit test / coverage reports
+# Unit test.py / coverage reports
 htmlcov/
 .tox/
 .nox/
@@ -127,3 +134,5 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+/workers/parse/parsenginx/
+/scripts/middleware_nginx_linux/
