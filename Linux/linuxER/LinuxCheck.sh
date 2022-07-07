@@ -69,11 +69,7 @@ cmdline=(
     "nc"
     "lrzsz"
     "wget"
-    #    "strace"
-    #    "htop"
-    #    "tar"
     "lsof"
-    #    "tcpdump"
 )
 for prog in "${cmdline[@]}"; do
 
