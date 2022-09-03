@@ -1,5 +1,6 @@
 # Myself
 .idea/
+.DS_store
 .vscode/
 result/
 /scripts/scripts/

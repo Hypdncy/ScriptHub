@@ -1,7 +1,6 @@
+# -*- coding: utf-8 -*-
 from gmssl.sm4 import CryptSM4, SM4_ENCRYPT, SM4_DECRYPT
 import binascii
-from heapq import heappush, heappop
-from collections import OrderedDict
 
 
 class SM4(object):
