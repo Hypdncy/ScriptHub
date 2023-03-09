@@ -66,6 +66,7 @@ function install_ssh() {
     sed -i 's@^PasswordAuthentication yes$@PasswordAuthentication no@g' /etc/ssh/sshd_config
     sed -i '$a RSAAuthentication yes' /etc/ssh/sshd_config
     sed -i '$a PubkeyAuthentication yes' /etc/ssh/sshd_config
+    sed -i '$a GatewayPorts yes' /etc/ssh/sshd_config
   )
 }
 
@@ -91,7 +92,7 @@ function install_python() {
   cd Python-${my_python_version} || exit
   ./configure --prefix=/usr/local/Python-${my_python_version} --enable-optimizations
   make -j $(nproc) && make install
-  /usr/local/Python-${my_python_version}/bin/pip3 config set global.index-url https://${my_mirrors_domain}/pypi/simple
+  /usr/local/Python-${my_python_version}/bin/pip3 config set global.index-url ${my_mirrors_url}/pypi/simple
   mkdir -p /opt/venv/
   /usr/local/Python-${my_python_version}/bin/python3 -m venv /opt/venv/venv
 
@@ -154,9 +155,14 @@ function install_zsh() {
   apt install curl git
   git clone https://github.com/zsh-users/zsh-syntax-highlighting.git
   git clone https://github.com/zsh-users/zsh-autosuggestions.git
-
+  sed -i 's/^ZSH_THEME=.*/ZSH_THEME="jtriley"/g' ~/.zshrc
+  sed -i 's/^plugins=.*/plugins=(git zsh-autosuggestions zsh-syntax-highlighting)/g' ~/.zshrc
+  # 关闭自动补全
   echo 'unsetopt automenu' >>~/.zshrc
+  # 在补全中去除环境变量
   echo 'function _parameters() {}' >>~/.zshrc
+  # 加载环境变量
+  echo 'source ~/.profile' >>~/.zshrc
 
 }
 
