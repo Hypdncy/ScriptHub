@@ -1,43 +1,26 @@
 #!/usr/bin/env bash
 
-my_hostname="ubuntu-light"
-my_version_python="3.10.5"
+my_hostname="light"
+my_version_python="3.11.2"
 my_version_go="1.18.3"
+my_mysql_pass="Mysql1235.."
 
-#镜像
-function install_source() {
+apt-get -y install wget curl
 
-  grep "ustc.edu.cn" /etc/apt/sources.list || echo "\
-# deb http://security.debian.org/debian-security bullseye-security main contrib
-# deb-src http://security.debian.org/debian-security bullseye-security main contrib
-
-deb http://mirrors.ustc.edu.cn/debian/ bullseye main contrib non-free
-deb-src http://mirrors.ustc.edu.cn/debian/ bullseye main contrib non-free
-
-deb http://mirrors.ustc.edu.cn/debian/ bullseye-updates main contrib non-free
-deb-src http://mirrors.ustc.edu.cn/debian/ bullseye-updates main contrib non-free
-
-deb http://mirrors.ustc.edu.cn/debian/ bullseye-backports main contrib non-free
-deb-src http://mirrors.ustc.edu.cn/debian/ bullseye-backports main contrib non-free
-
-deb http://mirrors.ustc.edu.cn/debian-security/ bullseye-security main contrib non-free
-deb-src http://mirrors.ustc.edu.cn/debian-security/ bullseye-security main contrib non-free
-" > /etc/apt/sources.list
+function install_apt() {
+  sed -i -E 's/(deb|security).debian.org/mirrors.aliyun.com/g' /etc/apt/sources.list
 }
 
 function install_locale() {
   timedatectl set-timezone Asia/Shanghai
   localectl set-locale LANG=zh_CN.UTF-8
   hostnamectl set-hostname ${my_hostname}
-
-  apt clean all
-  apt update
 }
 
 # vim
 function install_vim() {
-  apt -y purge vim*
-  apt -y install vim
+  apt-get -y purge vim*
+  apt-get -y install vim
 
   grep "^set nocompatible" /etc/vim/vimrc || echo "\
 set nocompatible
@@ -59,13 +42,13 @@ syntax on
 
 function install_dev() {
   # 开发软件包
-  apt -y install build-essential
+  apt-get -y install build-essential
 
   # 通用安装
-  apt -y install p7zip-full lrzsz tree curl wget
+  apt-get -y install p7zip-full lrzsz tree curl wget
 
   # 汉化
-  apt -y install -y manpages-zh
+  apt-get -y install -y manpages-zh
 }
 
 function install_ssh() {
@@ -94,8 +77,8 @@ alias l='ls \$LS_OPTIONS -lA'
 
 function install_proxychains() {
   # proxychains4
-  apt -y purge proxychains*
-  apt -y install proxychains4
+  apt-get -y purge proxychains*
+  apt-get -y install proxychains4
   sed -i 's/^socks/# &/g' /etc/proxychains4.conf
   grep "^socks" /etc/proxychains4.conf || sed -i '$ a socks5 127.0.0.1 10808' /etc/proxychains4.conf
 
@@ -104,8 +87,8 @@ function install_proxychains() {
 # Python
 
 function install_python() {
-  apt -y install wget libncursesw5-dev libssl-dev libsqlite3-dev tk-dev libgdbm-dev libc6-dev libbz2-dev libffi-dev zlib1g-dev
-  wget https://repo.huaweicloud.com/python/${my_version_python}/Python-${my_version_python}.tar.xz
+  apt-get -y install wget libncursesw5-dev libssl-dev libsqlite3-dev tk-dev libgdbm-dev libc6-dev libbz2-dev libffi-dev zlib1g-dev
+  test -f ./Python-${my_version_python}.tar || wget https://repo.huaweicloud.com/python/${my_version_python}/Python-${my_version_python}.tar.xz
   xz -d ./Python-${my_version_python}.tar.xz
   tar -xvf ./Python-${my_version_python}.tar
   cd Python-${my_version_python} || exit
@@ -117,7 +100,7 @@ function install_python() {
 
 function install_pip() {
   # pip 镜像源
-  test -f ~/.pip/pip.conf || (mkdir -p ~/.pip/ && echo "\
+  test -f ~/.config/pip/pip.conf || (mkdir -p ~/.config/pip/ && echo "\
 [global]
 index-url = https://repo.huaweicloud.com/repository/pypi/simple
 trusted-host = repo.huaweicloud.com
@@ -126,7 +109,7 @@ timeout = 120
 }
 
 function install_go() {
-  wget https://mirrors.aliyun.com/golang/go${my_version_go}.linux-amd64.tar.gz
+  test -f go${my_version_go}.linux-amd64.tar.gz || wget https://mirrors.aliyun.com/golang/go${my_version_go}.linux-amd64.tar.gz
   rm -rf /usr/local/go && tar -C /usr/local -xzf go${my_version_go}.linux-amd64.tar.gz
 
   grep "/usr/local/go/bin" ~/.profile || {
@@ -138,13 +121,43 @@ function install_go() {
   source "${HOME}/.profile"
 }
 
-#install_source
+function install_mysql() {
+  # 安装
+  apt-get update
+  apt-get install mysql-server
+  apt-get install mysql-client
+  systemctl restart mysqld
+  mysql -uroot -p --connect-expired-password -e "ALTER USER 'root'@'localhost' IDENTIFIED WITH mysql_native_password BY '${my_mysql_pass}';FLUSH PRIVILEGES;"
+  mysql -uroot -p"${my_mysql_pass}" --connect-expired-password -e "UPDATE mysql.user SET Host = '%' WHERE User = 'root';FLUSH PRIVILEGES;"
+
+  grep -E "^bind-address" /etc/mysql/mysql.conf.d/mysqld.cnf && sed -i 's/\(bind-address = 127.0.0.1\)/# \1/g' /etc/mysql/mysql.conf.d/mysqld.cnf
+
+}
+
+function install_docker() {
+  # step 1: 安装必要的一些系统工具
+  apt-get purge -y docker docker-engine docker.io
+  apt-get update
+  apt-get -y install apt-transport-https ca-certificates curl software-properties-common
+  # step 2: 安装GPG证书
+  curl -fsSL https://mirrors.aliyun.com/docker-ce/linux/debian/gpg | apt-key add -
+  # Step 3: 写入软件源信息
+  add-apt-repository "deb [arch=amd64] https://mirrors.aliyun.com/docker-ce/linux/debian $(lsb_release -cs) stable"
+  # Step 4: 更新并安装Docker-CE
+  apt-get -y update
+  apt-get -y install docker-ce
+
+}
+
+#install_apt
 install_locale
 install_vim
 install_dev
 install_ssh
-#install_bashrc
+install_bashrc
 install_proxychains
 install_python
 install_pip
 install_go
+install_docker
+install_mysql

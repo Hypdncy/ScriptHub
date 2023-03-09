@@ -64,11 +64,6 @@ fi
 
 # 安装应急必备工具
 cmdline=(
-    "net-tools"
-    "telnet"
-    "nc"
-    "lrzsz"
-    "wget"
     "lsof"
 )
 for prog in "${cmdline[@]}"; do
@@ -229,7 +224,7 @@ check_network() {
     echo -e "\n" | tee -a "$filename"
     #路由转发
     echo -e "\e[00;31m[+]路由转发\e[00m" | tee -a "$filename"
-    ip_forward=$(more /proc/sys/net/ipv4/ip_forward | awk -F: '{if ($1==1) print "1"}')
+    ip_forward=$(cat /proc/sys/net/ipv4/ip_forward | awk -F: '{if ($1==1) print "1"}')
     if [ -n "$ip_forward" ]; then
         echo "/proc/sys/net/ipv4/ip_forward 已开启路由转发" | tee -a "$filename"
     else
