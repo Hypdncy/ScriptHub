@@ -147,12 +147,24 @@ function install_docker() {
   apt-get -y install docker-ce
 }
 
+function install_zsh() {
+  cd "${ZSH_CUSTOM:-~/.oh-my-zsh/custom}"/plugins/ || exit
+  apt install zsh -y
+  chsh -s $(which zsh)
+  apt install curl git
+  git clone https://github.com/zsh-users/zsh-syntax-highlighting.git
+  git clone https://github.com/zsh-users/zsh-autosuggestions.git
+
+  echo 'unsetopt automenu' >>~/.zshrc
+  echo 'function _parameters() {}' >>~/.zshrc
+
+}
+
 #install_apt
 install_locale
 install_vim
 install_dev
-install_ssh
-install_bashrc
+#install_ssh
 install_proxychains
 install_python
 install_go
